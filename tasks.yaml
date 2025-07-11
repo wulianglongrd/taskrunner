@@ -1,0 +1,15 @@
+tasks:
+  - name: get_date
+    commands:
+      - "date +%Y-%m-%d"
+
+  - name: get_json
+    commands:
+      - "echo '{\"name\": \"chatgpt\", \"info\": {\"id\": 42}}'"
+    extract:
+      - field: "$.info.id"
+        as: "user_id"
+
+  - name: use_context
+    commands:
+      - "echo User ID is {{user_id}}"
