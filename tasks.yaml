@@ -9,7 +9,7 @@ tasks:
         as: "name"
       - field: "$.info.id"
         as: "user_id"
-    okMatch:
+    checkOk:
       context:
         name:
           exact: chatgpt
@@ -18,7 +18,7 @@ tasks:
     whenOk:
       name: "sub_command"
       command: echo "match whenOk, context name is {{name}} and user_id is {{user_id}}"
-      okMatch:
+      checkOk:
         output:
           - exact: fake
       whenOk:

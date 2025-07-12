@@ -13,8 +13,8 @@ pub struct Task {
     pub name: String,
     pub command: String,
     pub extract: Option<Vec<ExtractRule>>,
-    #[serde(rename = "okMatch")]
-    pub ok_match: Option<OkMatch>,
+    #[serde(rename = "checkOk")]
+    pub check_ok: Option<CheckOk>,
     #[serde(rename = "whenOk")]
     pub when_ok: Option<Box<Task>>,
     #[serde(rename = "whenErr")]
@@ -30,7 +30,7 @@ pub struct ExtractRule {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct OkMatch {
+pub struct CheckOk {
     #[serde(default)]
     pub context: HashMap<String, Matcher>,
     #[serde(default)]

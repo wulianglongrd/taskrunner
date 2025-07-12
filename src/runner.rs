@@ -36,7 +36,7 @@ pub fn run_task(task: Task, context: &mut HashMap<String, String>) -> anyhow::Re
     add_to_context(&task, context, &stdout)?;
 
     let mut is_ok = false;
-    if let Some(ok_match) = task.ok_match {
+    if let Some(ok_match) = task.check_ok {
         let context_match = if ok_match.context.is_empty() {
             true
         } else {
