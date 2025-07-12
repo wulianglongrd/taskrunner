@@ -1,15 +1,32 @@
 tasks:
   - name: get_date
-    commands:
-      - "date +%Y-%m-%d"
+    command: "date +%Y-%m-%d"
 
   - name: get_json
-    commands:
-      - "echo '{\"name\": \"chatgpt\", \"info\": {\"id\": 42}}'"
+    command: echo '{"name":"chatgpt","info":{"id":42}}'
     extract:
+      - field: "$.name"
+        as: "name"
       - field: "$.info.id"
         as: "user_id"
+    okMatch:
+      context:
+        name:
+          exact: chatgpt
+        user_id:
+          exact: 42
+    whenOk:
+      name: "sub_command"
+      command: echo "match whenOk, context name is {{name}} and user_id is {{user_id}}"
+      okMatch:
+        output:
+          - exact: fake
+      whenOk:
+        command: echo "see this means error"
+      whenErr:
+        command: echo "see this means ok"
+    whenErr:
+      command: echo "match whenErr, exit"
 
   - name: use_context
-    commands:
-      - "echo User ID is {{user_id}}"
+    command: echo "User ID is {{user_id}}"
