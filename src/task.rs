@@ -20,6 +20,7 @@ pub struct Condition {
     pub string_match: StringMatcher,
 }
 
+// see https://www.envoyproxy.io/docs/envoy/latest/api-v3/type/matcher/v3/string.proto
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct StringMatcher {
