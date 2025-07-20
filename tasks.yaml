@@ -1,32 +1,207 @@
 tasks:
-  - name: get_date
-    command: "date +%Y-%m-%d"
-
-  - name: get_json
-    command: echo '{"name":"chatgpt","info":{"id":42}}'
-    extract:
-      - field: "$.name"
-        as: "name"
-      - field: "$.info.id"
-        as: "user_id"
-    checkOk:
-      context:
-        name:
-          exact: chatgpt
-        user_id:
-          exact: 42
-    whenOk:
-      name: "sub_command"
-      command: echo "match whenOk, context name is {{name}} and user_id is {{user_id}}"
-      checkOk:
-        output:
-          - exact: fake
-      whenOk:
-        command: echo "see this means error"
-      whenErr:
-        command: echo "see this means ok"
-    whenErr:
-      command: echo "match whenErr, exit"
-
-  - name: use_context
-    command: echo "User ID is {{user_id}}"
+  - name: fetch_user
+    add_to_context:
+      name: kuat
+      run_fetch: true
+    command: 'curl -s "https://api.agify.io/?name={{name}}"'
+    output_type: json
+    output_context:
+      extract:
+        - as_key: user_name
+          field: "$.name"
+          extract_type: string
+        - as_key: user_age
+          field: "$.age"
+          extract_type: number
+        - as_key: user_count
+          field: "$.count"
+          extract_type: number
+    when_ok:
+      - name: check_age
+        skip_if:
+          - key: "user_age"
+            string_match:
+              exact: "48"
+        command: 'echo "{{user_age}}"'
+        output_type: string
+        output_context:
+          extract:
+            - as_key: age_str
+              field: "$.value"
+              extract_type: string
+        check_ok:
+          - key: "age_str"
+            string_match:
+              safe_regex: "^4[0-9]$"
+        when_ok:
+          - name: age_is_48
+            command: 'echo "age={{age_str}}||status=ok||request={\"name\":\"{{user_name}}\"}||response={\"greeting\":\"hello {{user_name}}\",\"status\":\"success\"}"'
+            output_type: 'delim:||'
+            output_context:
+              extract:
+                - as_key: status
+                  field: "$.status"
+                  extract_type: string
+                - as_key: greeting
+                  field: "$.response.greeting"
+                  extract_type: string
+            when_ok:
+              - name: print_greeting
+                command: 'echo "{{greeting}}"'
+                output_type: string
+                output_context:
+                  extract:
+                    - as_key: greeting_value
+                      field: "$.value"
+                      extract_type: string
+                check_ok:
+                  - key: "greeting_value"
+                    string_match:
+                      exact: "hello kuat"
+                      ignore_case: true
+            when_err:
+              - name: print_greeting_fail
+                command: 'echo "Greeting not ok!"'
+                output_type: string
+                output_context:
+                  extract:
+                    - as_key: greeting_fail
+                      field: "$.value"
+                      extract_type: string
+        when_err:
+          - name: age_not_4x
+            command: 'echo "Age is not in 40s!"'
+            output_type: string
+            output_context:
+              extract:
+                - as_key: age_not_4x_msg
+                  field: "$.value"
+                  extract_type: string
+    when_err:
+      - name: fetch_fail
+        command: 'echo "Fetch failed or skipped!"'
+        output_type: string
+        output_context:
+          extract:
+            - as_key: fetch_fail_msg
+              field: "$.value"
+              extract_type: string
+  - name: grep_log
+    add_to_context:
+      log_flag: true
+    command: 'echo "error: something failed\ninfo: all good\nerror: another fail" | grep "error"'
+    output_type: string
+    output_context:
+      extract:
+        - as_key: log_value
+          field: "$.value"
+          extract_type: string
+    check_ok:
+      - key: "log_value"
+        string_match:
+          prefix: "error"
+    when_ok:
+      - name: count_errors
+        command: 'echo "{{log_value}}" | grep -c "error"'
+        output_type: string
+        output_context:
+          extract:
+            - as_key: error_count
+              field: "$.value"
+              extract_type: number
+        check_ok:
+          - key: "error_count"
+            string_match:
+              exact: "2"
+        when_ok:
+          - name: print_error_count
+            command: 'echo "Error count is 2!"'
+            output_type: string
+            output_context:
+              extract:
+                - as_key: error_count_msg
+                  field: "$.value"
+                  extract_type: string
+        when_err:
+          - name: print_error_count_fail
+            command: 'echo "Error count is not 2!"'
+            output_type: string
+            output_context:
+              extract:
+                - as_key: error_count_fail_msg
+                  field: "$.value"
+                  extract_type: string
+    when_err:
+      - name: grep_log_fail
+        command: 'echo "Grep log skipped or failed!"'
+        output_type: string
+        output_context:
+          extract:
+            - as_key: grep_log_fail_msg
+              field: "$.value"
+              extract_type: string
+  - name: always_fail
+    command: 'false'
+    output_type: string
+    output_context:
+      extract:
+        - as_key: fail_result
+          field: "$.value"
+          extract_type: string
+    when_ok:
+      - name: on_fail_print
+        command: 'echo "Task failed as expected"'
+        output_type: string
+        output_context:
+          extract:
+            - as_key: fail_message
+              field: "$.value"
+              extract_type: string
+    when_err:
+      - name: on_fail_print_err
+        command: 'echo "Task failed and not as expected!"'
+        output_type: string
+        output_context:
+          extract:
+            - as_key: fail_message_err
+              field: "$.value"
+              extract_type: string
+  - name: multi_check_example
+    add_to_context:
+      multi_flag: yes
+    command: 'echo "All conditions met!"'
+    output_type: string
+    output_context:
+      extract:
+        - as_key: multi_check_result
+          field: "$.value"
+          extract_type: string
+    check_ok:
+      - key: "user_name"
+        string_match:
+          exact: "kuat"
+          ignore_case: true
+      - key: "user_age"
+        string_match:
+          safe_regex: "^4[0-9]$"
+      - key: "run_fetch"
+        string_match:
+          exact: "true"
+    when_ok:
+      - name: multi_check_ok
+        command: 'echo "Multi check passed!"'
+        output_type: string
+        output_context:
+          extract:
+            - as_key: multi_check_ok_msg
+              field: "$.value"
+              extract_type: string
+    when_err:
+      - name: multi_check_err
+        command: 'echo "Multi check failed!"'
+        output_type: string
+        output_context:
+          extract:
+            - as_key: multi_check_err_msg
+              field: "$.value"
+              extract_type: string 

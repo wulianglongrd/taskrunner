@@ -1,18 +1,15 @@
 [package]
-name = "taskrunner"
+name = "task_runner"
 version = "0.1.0"
 edition = "2021"
-
-[profile.dev]
-opt-level = 0
-debug = true
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 serde_json = "1.0"
+handlebars = "4.5"
+regex = "1.10"
+anyhow = "1.0"
+thiserror = "1.0"
 jsonpath_lib = "0.3"
-handlebars = "6.3.2"
-clap = { version = "4.4", features = ["derive"] }
-anyhow = "1.0.98"
-regex = "1.11.1"
+clap = { version = "4.5", features = ["derive"] }

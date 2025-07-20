@@ -1,16 +1,24 @@
+mod task;
+mod context;
+mod matcher;
+mod parser;
+mod config;
+mod runner;
+
 use clap::Parser;
 
-mod runner;
-mod config;
-
 #[derive(Parser, Debug)]
-struct Args {
+#[command(author, version, about, long_about = None)]
+pub struct Args {
+    /// Path to the YAML config file
     #[arg(short, long, default_value = "tasks.yaml")]
-    config: String,
+    pub config: String,
 }
 
-fn main() -> anyhow::Result<()> {
+fn main() {
     let args = Args::parse();
-    runner::run_tasks(&args.config)?;
-    Ok(())
+    if let Err(e) = runner::run_with_config(&args) {
+        eprintln!("Error: {e}");
+        std::process::exit(1);
+    }
 }
