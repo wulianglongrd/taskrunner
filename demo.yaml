@@ -1,0 +1,6 @@
+tasks:
+  - name: demo
+    add_to_context:
+      name: kuat
+    command: "echo {{name}}"
+    output_type: string
